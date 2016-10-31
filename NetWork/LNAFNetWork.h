@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <AVFoundation/AVFoundation.h>
 #import "LNNetWorkCache.h"
 #import "AFNetWorking.h"
 #import "AFNetworkActivityIndicatorManager.h"
@@ -75,7 +76,7 @@ typedef void(^NetworkStatus)(LNNetWorkStatus status);
  *
  *  @return 返回的对象可取消请求,调用cancel方法
  */
-+(NSURLSessionTask *)GET:(NSString *)URL Parameters:(NSDictionary *)parameters IsCache:(BOOL) isCache ResponseCache:(HttpRequestCache)responseCache success:(HttpRequestSuccess)success Failure:(HttpRequestFailed)failure;
++(NSURLSessionTask *)GET:(NSString *)URL parameters:(NSDictionary *)parameters isCache:(BOOL) isCache responseCache:(HttpRequestCache)responseCache success:(HttpRequestSuccess)success failure:(HttpRequestFailed)failure;
 
 
 
@@ -91,7 +92,7 @@ typedef void(^NetworkStatus)(LNNetWorkStatus status);
  *
  *  @return 返回的对象可取消请求,调用cancel方法
  */
-+(NSURLSessionTask *)POST:(NSString *)URL Parameters:(NSDictionary *)parameters IsCache:(BOOL) isCache ResponseCache:(HttpRequestCache)responseCache success:(HttpRequestSuccess)success Failure:(HttpRequestFailed)failure;
++(NSURLSessionTask *)POST:(NSString *)URL parameters:(NSDictionary *)parameters isCache:(BOOL) isCache responseCache:(HttpRequestCache)responseCache success:(HttpRequestSuccess)success failure:(HttpRequestFailed)failure;
 
 
 
@@ -104,7 +105,7 @@ typedef void(^NetworkStatus)(LNNetWorkStatus status);
  */
 
 
-+(id)isExistCacheWithURL:(NSString *)URL Parameters:(NSDictionary *)parameters;
++(id)isExistCacheWithURL:(NSString *)URL parameters:(NSDictionary *)parameters;
 
 
 
@@ -123,7 +124,25 @@ typedef void(^NetworkStatus)(LNNetWorkStatus status);
  *
  *  @return 返回的对象可取消请求,调用cancel方法
  */
-+(NSURLSessionTask *)UploadWithURL:(NSString *)URL Parameters:(NSDictionary *)parameters Images:(NSArray <UIImage *> * )images  Name:(NSString *)name FileName:(NSString *)fileName MimeType:(NSString *)mimeType Progress:(HttpProgress)progress Success:(HttpRequestSuccess)success Failure:(HttpRequestFailed)failure;
++(NSURLSessionTask *)UploadWithURL:(NSString *)URL parameters:(NSDictionary *)parameters images:(NSArray<UIImage *> *)images name:(NSString *)name fileName:(NSString *)fileName mimeType:(NSString *)mimeType progress:(HttpProgress)progress success:(HttpRequestSuccess)success failure:(HttpRequestFailed)failure;
+
+
+
+
+/**
+ *  视频上传
+ *
+ *  @param URL        上传的url
+ *  @param parameters 请求的参数
+ *  @param videoPath  上传视频的本地沙盒路径
+ *  @param success    成功回调
+ *  @param failure    失败回调
+ *  @param progress   上传进度
+ */
+
+
++(void)uploadVideoWithURL:(NSString *)URL parameters:(NSDictionary *)parameters videoPath:(NSString *)videoPath success:(HttpRequestSuccess)success failure:(HttpRequestFailed)failure andUploadProgress:(HttpProgress)progress;
+
 
 /**
  *  下载文件
@@ -136,7 +155,8 @@ typedef void(^NetworkStatus)(LNNetWorkStatus status);
  *
  *  @return 返回NSURLSessionDownloadTask
  */
-+(NSURLSessionTask *)DownLoadWithURL:(NSString *)URL FileDir:(NSString *)fileDir Progress:(HttpProgress)progress Success:(void(^)(NSString * filePath)) success Failure:(HttpRequestFailed)failure;
+
++(NSURLSessionTask *)DownLoadWithURL:(NSString *)URL fileDir:(NSString *)fileDir progress:(HttpProgress)progress success:(void(^)(NSString * filePath)) success failure:(HttpRequestFailed)failure;
 
 
 

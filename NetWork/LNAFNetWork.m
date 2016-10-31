@@ -9,7 +9,7 @@
 #import "LNAFNetWork.h"
 
 @implementation LNAFNetWork
-static BOOL _isNetwork;
+
 static AFHTTPSessionManager *_manager;
 
 #pragma mark-初始化单例
@@ -69,7 +69,7 @@ static AFHTTPSessionManager *_manager;
 
 
 #pragma mark - GET请求
-+(NSURLSessionTask *)GET:(NSString *)URL Parameters:(NSDictionary *)parameters IsCache:(BOOL) isCache ResponseCache:(HttpRequestCache)responseCache success:(HttpRequestSuccess)success Failure:(HttpRequestFailed)failure{
++(NSURLSessionTask *)GET:(NSString *)URL parameters:(NSDictionary *)parameters isCache:(BOOL) isCache responseCache:(HttpRequestCache)responseCache success:(HttpRequestSuccess)success failure:(HttpRequestFailed)failure{
     
     if(!isCache){
        
@@ -105,7 +105,7 @@ static AFHTTPSessionManager *_manager;
 }
 
 #pragma mark - POST请求
-+(NSURLSessionTask *)POST:(NSString *)URL Parameters:(NSDictionary *)parameters IsCache:(BOOL) isCache ResponseCache:(HttpRequestCache)responseCache success:(HttpRequestSuccess)success Failure:(HttpRequestFailed)failure{
++(NSURLSessionTask *)POST:(NSString *)URL parameters:(NSDictionary *)parameters isCache:(BOOL) isCache responseCache:(HttpRequestCache)responseCache success:(HttpRequestSuccess)success failure:(HttpRequestFailed)failure{
     if(!isCache){
         
         responseCache = nil;
@@ -142,7 +142,7 @@ static AFHTTPSessionManager *_manager;
 
 #pragma mark - 检查是否有缓存
 
-+(id)isExistCacheWithURL:(NSString *)URL Parameters:(NSDictionary *)parameters{
++(id)isExistCacheWithURL:(NSString *)URL parameters:(NSDictionary *)parameters{
 
     return  [LNNetWorkCache httpCacheForURL:URL parameters:parameters];
     
@@ -151,7 +151,7 @@ static AFHTTPSessionManager *_manager;
 
 
 //上传图片文件
-+(NSURLSessionTask *)UploadWithURL:(NSString *)URL Parameters:(NSDictionary *)parameters Images:(NSArray<UIImage *> *)images Name:(NSString *)name FileName:(NSString *)fileName MimeType:(NSString *)mimeType Progress:(HttpProgress)progress Success:(HttpRequestSuccess)success Failure:(HttpRequestFailed)failure{
++(NSURLSessionTask *)UploadWithURL:(NSString *)URL parameters:(NSDictionary *)parameters images:(NSArray<UIImage *> *)images name:(NSString *)name fileName:(NSString *)fileName mimeType:(NSString *)mimeType progress:(HttpProgress)progress success:(HttpRequestSuccess)success failure:(HttpRequestFailed)failure{
     
     return [_manager POST:URL parameters:parameters constructingBodyWithBlock:^(id<AFMultipartFormData>  _Nonnull formData) {
         //图片经过压缩-添加-上传
@@ -192,11 +192,92 @@ static AFHTTPSessionManager *_manager;
 }
 
 
+#pragma mark - 上传视频
+
++(void)uploadVideoWithURL:(NSString *)URL parameters:(NSDictionary *)parameters videoPath:(NSString *)videoPath success:(HttpRequestSuccess)success failure:(HttpRequestFailed)failure andUploadProgress:(HttpProgress)progress{
+    
+    //获取视频资源
+   AVURLAsset *avAsset = [AVURLAsset assetWithURL:[NSURL URLWithString:videoPath]];
+    
+    //2.压缩
+    AVAssetExportSession * avAssetExport = [[AVAssetExportSession alloc] initWithAsset:avAsset presetName:AVAssetExportPreset640x480];
+    
+    //创建日期格式器
+    NSDateFormatter * formatter = [[NSDateFormatter alloc] init];
+    
+    [formatter setDateFormat:@"yyyy-MM-dd-HH:mm:ss"];
+    
+    //转化后直接写入Library --caches
+    
+   NSString *  videoWritePath = [[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject] stringByAppendingString:[NSString stringWithFormat:@"/output-%@.mp4",[formatter stringFromDate:[NSDate date]]]];
+    
+    avAssetExport.outputURL = [NSURL URLWithString:videoWritePath];
+    avAssetExport.outputFileType = AVFileTypeMPEG4;
+    
+    [avAssetExport exportAsynchronouslyWithCompletionHandler:^{
+        
+        switch ([avAssetExport status]) {
+            case AVAssetExportSessionStatusCompleted:{
+                
+                [_manager POST:URL parameters:parameters constructingBodyWithBlock:^(id<AFMultipartFormData>  _Nonnull formData) {
+                    
+                    //获取沙盒中的视频内容
+                     [formData appendPartWithFileURL:[NSURL fileURLWithPath:videoWritePath] name:@"write you want to writre" fileName:videoWritePath mimeType:@"video/mpeg4" error:nil];
+                    
+                } progress:^(NSProgress * _Nonnull uploadProgress) {
+                    NSLog(@"上传进度--%lld,总进度---%lld",uploadProgress.completedUnitCount,uploadProgress.totalUnitCount);
+                    
+                    if (progress)
+                    {
+                        progress(uploadProgress);
+                    }
+
+                    
+                   
+                } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+                    NSLog(@"上传视频成功 = %@",responseObject);
+                    if (success)
+                    {
+                        success(responseObject);
+                    }
+
+                } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+                   
+                    if (failure)
+                    {
+                        failure(error);
+                    }
+                    
+                }];
+                
+                break;
+                
+            }
+                
+            default:
+                break;
+                
+        }
+        
+           
+       
+       
+        
+    }];
+    
+    
+    
+    
+    
+    
+}
+
 #pragma mark - 下载文件
-+(NSURLSessionTask *)DownLoadWithURL:(NSString *)URL FileDir:(NSString *)fileDir Progress:(HttpProgress)progress Success:(void(^)(NSString * filePath)) success Failure:(HttpRequestFailed)failure{
++(NSURLSessionTask *)DownLoadWithURL:(NSString *)URL fileDir:(NSString *)fileDir progress:(HttpProgress)progress success:(void(^)(NSString * filePath)) success failure:(HttpRequestFailed)failure{
     NSURLRequest * request = [NSURLRequest requestWithURL:[NSURL URLWithString:URL]];
     NSURLSessionDownloadTask * downLoadTask = [_manager downloadTaskWithRequest:request progress:^(NSProgress * _Nonnull downloadProgress) {
-        //下载进度
+        
+       /*! 回到主线程刷新UI */
         dispatch_sync(dispatch_get_main_queue(), ^{
             
             if (progress) {

@@ -30,7 +30,7 @@
     //判断是否有缓存
     NSLog(@"网络缓存大小cache = %fMB",[LNNetWorkCache getAllHttpCacheSize]/1024/1024.f);
 
-    if([LNAFNetWork isExistCacheWithURL:dataURl Parameters:nil]!= nil){
+    if([LNAFNetWork isExistCacheWithURL:dataURl parameters:nil]!= nil){
     //有缓存，加载缓存
         
         NSLog(@"缓存加载的数据");
@@ -50,8 +50,7 @@
                 case LNNetWorkStatusReachableWWAN:
                 case LNNetWorkStatusReachableWIFi: {
                     
-                    [LNAFNetWork GET:dataURl Parameters:nil IsCache:YES ResponseCache:^(id responseCache) {
-                        
+                    [LNAFNetWork GET:dataURl parameters:nil isCache:YES responseCache:^(id responseCache) {
                         
                     } success:^(id responseObject) {
                         //网络请求加载的数据
@@ -59,10 +58,12 @@
                         
                         _dataShow.text = [self jsonToString:responseObject];
                         
-                    } Failure:^(NSError *error) {
                         
+                    } failure:^(NSError *error) {
+                         NSLog(@"有网络,请求网络数据");
                     }];
-                    NSLog(@"有网络,请求网络数据");
+                     
+                   
                     break;
             }
        
